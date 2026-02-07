@@ -8,6 +8,6 @@ import net.fadi.ems.entity.Employee;
 @Mapper(componentModel = "spring")
 public interface EmployeeMapper {
 
-    EmployeeDto toDto(Employee employee);
-    Employee toEntity(EmployeeDto employeeDto);
+    public EmployeeDto toDto(Employee employee);
+    public Employee toEntity(EmployeeDto employeeDto);
 }

@@ -1,5 +1,7 @@
 package net.fadi.ems.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +34,13 @@ public class EmployeeService implements EmployeeServiceInterface {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
         return employeeMapper.toDto(entity);
+    }
+
+    @Override
+    public List<EmployeeDto> getAllEmployees() {
+        List<Employee> entities = employeeRepository.findAll();
+
+        return entities.stream().map(employeeMapper::toDto).toList();
     }
 
 }

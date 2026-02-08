@@ -57,4 +57,12 @@ public class EmployeeService implements EmployeeServiceInterface {
         return employeeMapper.toDto(entity);
     }
 
+    @Override
+    public void deleteEmployee(Long id) {
+        Employee entity = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+
+        employeeRepository.delete(entity);
+    }
+
 }

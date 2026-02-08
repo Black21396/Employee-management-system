@@ -43,4 +43,18 @@ public class EmployeeService implements EmployeeServiceInterface {
         return entities.stream().map(employeeMapper::toDto).toList();
     }
 
+    @Override
+    public EmployeeDto updateEmployee(Long id, EmployeeDto employeeDto) {
+        Employee entity = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+
+        entity.setFirstName(employeeDto.getFirstName());
+        entity.setLastName(employeeDto.getLastName());
+        entity.setEmail(employeeDto.getEmail());
+
+        entity = employeeRepository.save(entity);
+
+        return employeeMapper.toDto(entity);
+    }
+
 }

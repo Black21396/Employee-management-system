@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import net.fadi.ems.dto.EmployeeDto;
 import net.fadi.ems.entity.Employee;
+import net.fadi.ems.exception.ResourceNotFoundException;
 import net.fadi.ems.mapper.EmployeeMapper;
 import net.fadi.ems.repository.EmployeeRepository;
 import net.fadi.ems.service.interfaces.EmployeeServiceInterface;
@@ -24,5 +25,13 @@ public class EmployeeService implements EmployeeServiceInterface {
 
         return employeeMapper.toDto(entity);
     }
-    
+
+    @Override
+    public EmployeeDto getEmployeeById(Long id) {
+        Employee entity = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
+
+        return employeeMapper.toDto(entity);
+    }
+
 }

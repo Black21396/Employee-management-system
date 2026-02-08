@@ -4,5 +4,7 @@ import net.fadi.ems.dto.EmployeeDto;
 
 public interface EmployeeServiceInterface {
     public EmployeeDto createEmployee(EmployeeDto employeeDto);
-    
+
+    public EmployeeDto getEmployeeById(Long id);
+
 }

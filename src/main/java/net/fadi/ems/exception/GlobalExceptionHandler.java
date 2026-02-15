@@ -21,4 +21,16 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(DatabaseException.class)
+    public ResponseEntity<ErrorResponse> handleDatabaseException(DatabaseException exception,
+            HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Database error",
+                exception.getMessage(),
+                request.getRequestURI(),
+                HttpStatus.BAD_REQUEST.value());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

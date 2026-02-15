@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import net.fadi.ems.dto.EmployeeDto;
 import net.fadi.ems.entity.Employee;
+import net.fadi.ems.exception.DatabaseException;
 import net.fadi.ems.exception.ResourceNotFoundException;
 import net.fadi.ems.mapper.EmployeeMapper;
 import net.fadi.ems.repository.EmployeeRepository;
@@ -23,7 +24,11 @@ public class EmployeeService implements EmployeeServiceInterface {
     @Override
     public EmployeeDto createEmployee(EmployeeDto employeeDto) {
         Employee entity = employeeMapper.toEntity(employeeDto);
-        entity = employeeRepository.save(entity);
+        try {
+            entity = employeeRepository.save(entity);
+        } catch (Exception e) {
+            throw new DatabaseException(e.getMessage());
+        }
 
         return employeeMapper.toDto(entity);
     }
@@ -52,7 +57,11 @@ public class EmployeeService implements EmployeeServiceInterface {
         entity.setLastName(employeeDto.getLastName());
         entity.setEmail(employeeDto.getEmail());
 
-        entity = employeeRepository.save(entity);
+        try {
+            entity = employeeRepository.save(entity);
+        } catch (Exception e) {
+            throw new DatabaseException(e.getMessage());
+        }
 
         return employeeMapper.toDto(entity);
     }
@@ -62,7 +71,10 @@ public class EmployeeService implements EmployeeServiceInterface {
         Employee entity = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee", "id", id));
 
-        employeeRepository.delete(entity);
+        try {
+            employeeRepository.delete(entity);
+        } catch (Exception e) {
+            throw new DatabaseException(e.getMessage());
+        }
     }
-
 }

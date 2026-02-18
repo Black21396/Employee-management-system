@@ -1,0 +1,48 @@
+# --- Version Control ---
+.git
+.gitignore
+.gitattributes
+
+# --- OS / IDE Garbage ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.bak
+
+# --- Java / Spring Boot (Backend) ---
+**/target/
+**/.mvn/
+**/build/
+*.jar
+*.war
+.classpath
+.project
+.settings/
+
+# --- Node.js / Next.js (Frontend) ---
+**/node_modules/
+**/out/
+**/.next/
+**/build/
+**/dist/
+.npm
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Docker & Secrets ---
+**/.env
+**/.env.*
+docker-compose.yml
+docker-compose.override.yml
+Dockerfile*
+LICENSE
+README.md
+
+# --- Databases ---
+mysql_data/
+*.sql
+*.sqlite

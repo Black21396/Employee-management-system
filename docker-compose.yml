@@ -1,0 +1,112 @@
+services:
+  # ────────────────────────────────
+  # SERVICE 1: MySQL Database
+  # Starts FIRST — backend depends on it
+  # ────────────────────────────────
+  mysql-db:
+    image: mysql:8.0
+    container_name: employee-mysql
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "3307:3306" # Expose to host for tools like MySQL Workbench
+
+    volumes:
+      - mysql_data:/var/lib/mysql # Persist data between restarts
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${DB_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # MySQL needs time to initialize on first start
+
+    networks:
+      - employee-network
+
+  # ────────────────────────────────
+  # SERVICE 2: Spring Boot Backend
+  # Waits for MySQL to be healthy before starting
+  # ────────────────────────────────
+  backend:
+    build:
+      context: . # Path to the backend folder (where Dockerfile is)
+      dockerfile: Dockerfile
+    container_name: employee-backend
+    restart: unless-stopped
+
+    environment:
+      # IMPORTANT: use 'mysql-db' (service name), NOT localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${DDL_AUTO:-update} # Best practice: 'validate' in prod, 'update' in dev
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-prod}
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      mysql-db:
+        condition: service_healthy # Wait until MySQL passes its healthcheck
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s # Spring Boot startup takes time
+
+    networks:
+      - employee-network
+
+  # ────────────────────────────────
+  # SERVICE 3: Next.js Frontend
+  # Depends on backend being healthy
+  # ────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: employee-frontend
+    restart: unless-stopped
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      backend:
+        condition: service_healthy # Wait until Spring Boot is ready
+
+    networks:
+      - employee-network
+
+# ────────────────────────────────
+# Named volume — data persists even if container is removed
+# ────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+
+# ────────────────────────────────
+# Custom bridge network for inter-container communication
+# ────────────────────────────────
+networks:
+  employee-network:
+    driver: bridge

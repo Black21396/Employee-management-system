@@ -1,4 +1,4 @@
-package net.fadi.ems.dto;
+package net.fadi.ems.model;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;

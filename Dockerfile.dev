@@ -1,0 +1,25 @@
+# --------------------------------------------------
+# Development Dockerfile for Spring Boot
+# Uses full Maven + JDK image
+# Enables hot reload with spring-boot:run
+# --------------------------------------------------
+
+FROM maven:3.9.6-eclipse-temurin-17
+
+# Set working directory
+WORKDIR /app
+
+# Copy pom.xml first (better dependency caching)
+COPY pom.xml .
+
+# Download dependencies
+RUN mvn dependency:go-offline -B
+
+# Copy full source code
+COPY src ./src
+
+# Expose application port
+EXPOSE 8080
+
+# Start Spring Boot in development mode
+CMD ["mvn", "spring-boot:run"]

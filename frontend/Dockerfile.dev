@@ -1,0 +1,30 @@
+# --------------------------------------------------
+# Development Dockerfile for Next.js Frontend
+# Uses Node.js Alpine image for lightweight setup
+# Runs Next.js in development mode with hot reload
+# --------------------------------------------------
+
+# Use official Node.js 20 Alpine image (small and fast)
+FROM node:20-alpine
+
+# Set working directory inside the container
+WORKDIR /app
+
+# Copy only package files first
+# This allows Docker to cache dependency installation
+# and avoid reinstalling on every code change
+COPY package.json package-lock.json* ./
+
+# Install all dependencies (including devDependencies)
+# Required for "next dev" to work
+RUN npm install
+
+# Copy the rest of the application source code
+COPY . .
+
+# Expose port 3000 (default Next.js dev server port)
+EXPOSE 3000
+
+# Start Next.js in development mode
+# Enables hot reload and file watching
+CMD ["npm", "run", "dev"]

@@ -1,0 +1,108 @@
+services:
+  # --------------------------------------------------
+  # MySQL Database (Development)
+  # Persistent database for local development
+  # --------------------------------------------------
+  mysql-db:
+    image: mysql:8.0
+    container_name: employee-mysql-dev
+    restart: unless-stopped # Restart container unless manually stopped
+
+    environment:
+      # Database credentials loaded from .env file
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "3307:3306" # Expose MySQL to host (for tools like MySQL Workbench)
+
+    volumes:
+      - mysql_data_dev:/var/lib/mysql # Persist database data between restarts
+
+    networks:
+      - employee-network-dev
+
+  # --------------------------------------------------
+  # Spring Boot Backend (Development Mode)
+  # Uses Maven image and runs spring-boot:run
+  # Enables hot reload with DevTools
+  # --------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: employee-backend-dev
+    working_dir: /app # Set working directory inside container
+
+    volumes:
+      - .:/app # Mount project source code for live reload
+      - ~/.m2:/root/.m2 # Cache Maven dependencies to speed up builds
+
+    command: mvn spring-boot:run # Start Spring Boot in development mode
+
+    environment:
+      # Use service name "mysql-db" instead of localhost
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update # Auto-update schema in development
+      SPRING_PROFILES_ACTIVE: dev # Activate dev profile
+
+    ports:
+      - "8080:8080" # Expose backend API to host
+
+    env_file:
+      - .env.dev
+
+    depends_on:
+      - mysql-db # Ensure database starts before backend
+
+    networks:
+      - employee-network-dev
+
+  # --------------------------------------------------
+  # Next.js Frontend (Development Mode)
+  # Runs "next dev" for hot reload
+  # --------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: employee-frontend-dev
+    working_dir: /app # Set working directory inside container
+
+    volumes:
+      - ./frontend:/app # Mount frontend source code for hot reload
+      - /app/node_modules # Anonymous volume to prevent overwriting container node_modules
+
+    command: npm run dev # Start Next.js development server
+
+    environment:
+      NODE_ENV: development # Ensure development mode
+
+    ports:
+      - "3000:3000" # Expose frontend to host
+
+    depends_on:
+      - backend # Ensure backend is running before frontend
+
+    networks:
+      - employee-network-dev
+
+# --------------------------------------------------
+# Named volume for persistent MySQL data
+# --------------------------------------------------
+volumes:
+  mysql_data_dev:
+    driver: local
+
+# --------------------------------------------------
+# Custom bridge network for container communication
+# Allows services to communicate via service names
+# --------------------------------------------------
+networks:
+  employee-network-dev:
+    driver: bridge

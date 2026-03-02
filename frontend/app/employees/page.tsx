@@ -3,18 +3,31 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Employee } from "../types/Employee";
 import { employeeService } from "../services/EmployeeService";
+import { useAuth } from "../context/AuthContext";
 
 export default function EmployeeListPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isAuthenticated, isAdmin, logout } = useAuth();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/");
+      return;
+    }
+
     employeeService
       .getAll()
       .then(setEmployees)
+      .catch((err) => {
+        if (err.message.includes("401")) {
+          logout();
+          router.push("/");
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAuthenticated, router, logout]);
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this employee?")) return;
@@ -27,13 +40,17 @@ export default function EmployeeListPage() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Employees</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => router.push("/employees/new")}
-        >
-          + New Employee
-        </button>
+        <h2>Employees {isAdmin ? "(Admin View)" : "(User View)"}</h2>
+        <div>
+          {isAdmin && (
+            <button
+              className="btn btn-primary me-2"
+              onClick={() => router.push("/employees/new")}
+            >
+              + New Employee
+            </button>
+          )}
+        </div>
       </div>
       <table className="table table-bordered table-hover">
         <thead className="table-dark">
@@ -42,7 +59,7 @@ export default function EmployeeListPage() {
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
-            <th>Actions</th>
+            {isAdmin && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -52,20 +69,22 @@ export default function EmployeeListPage() {
               <td>{emp.firstName}</td>
               <td>{emp.lastName}</td>
               <td>{emp.email}</td>
-              <td>
-                <button
-                  className="btn btn-sm btn-warning me-2"
-                  onClick={() => router.push(`/employees/${emp.id}/edit`)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => handleDelete(emp.id!)}
-                >
-                  Delete
-                </button>
-              </td>
+              {isAdmin && (
+                <td>
+                  <button
+                    className="btn btn-sm btn-warning me-2"
+                    onClick={() => router.push(`/employees/${emp.id}/edit`)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => handleDelete(emp.id!)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
